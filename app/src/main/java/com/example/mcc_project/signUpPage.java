@@ -70,7 +70,7 @@ public class signUpPage extends AppCompatActivity {
 
                 progressBar.setVisibility(View.VISIBLE);
 
-                // REGISTER THE USER IN FIERBASE
+                // REGISTER THE USER IN FIREBASE
 
                 fAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
