@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Cycle Maps</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="MAPS_API_KEY">AIzaSyDdmf6aG9qVUlwKsat3MPmQ4LBvMnNuQsU</string>
+</resources>
