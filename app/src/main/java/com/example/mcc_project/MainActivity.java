@@ -78,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                        System.out.println(snapshot.getKey());
-                                        System.out.println(snapshot.getValue());
+                                        System.out.println("Cycle key : "+snapshot.getKey());
+                                        System.out.println("Cycle key : "+snapshot.getValue());
                                     }
                                 }
                                 @Override
