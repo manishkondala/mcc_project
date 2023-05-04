@@ -100,7 +100,15 @@ public class signUpPage extends AppCompatActivity {
                     Users users = new Users(name,sbuID,phone);
                     db = FirebaseDatabase.getInstance();
                     reference = db.getReference("Users");
-                    reference.child(name).setValue(users);
+                    reference.child(name).setValue(users).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            name.isEmpty();
+                            sbuID.isEmpty();
+                            phone.isEmpty();
+                        }
+                    });
+
                 }
 
                 // REGISTER THE USER IN FIREBASE ///////////////////////////////////////
