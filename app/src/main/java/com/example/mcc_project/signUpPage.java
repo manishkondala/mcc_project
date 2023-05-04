@@ -13,10 +13,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mcc_project.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.ktx.Firebase;
 
 public class signUpPage extends AppCompatActivity {
 
@@ -25,10 +29,13 @@ public class signUpPage extends AppCompatActivity {
     TextView mLoginButton;
     FirebaseAuth fAuth;
     ProgressBar progressBar;
+    FirebaseDatabase db;
+    DatabaseReference reference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_sign_up_page);
 
         mName = findViewById(R.id.editTextPersonName);
@@ -40,6 +47,7 @@ public class signUpPage extends AppCompatActivity {
         mLoginButton = findViewById(R.id.existingUserID);
 
         fAuth = FirebaseAuth.getInstance();
+
         progressBar = findViewById(R.id.progressBar);
 
         if(fAuth.getCurrentUser() != null) {
@@ -50,8 +58,23 @@ public class signUpPage extends AppCompatActivity {
         mRegeisterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String name = mName.getText().toString().trim();
+                String sbuID = mSBUID.getText().toString().trim();
+                String phone = mPhone.getText().toString().trim();
                 String email = mEmail.getText().toString().trim();
                 String password = mPassword.getText().toString().trim();
+
+                if(TextUtils.isEmpty(name)) {
+                    mName.setError("Name is Required");
+                }
+
+                if(TextUtils.isEmpty(sbuID)) {
+                    mSBUID.setError("Stony Brook ID is Required");
+                }
+
+                if(TextUtils.isEmpty(phone)) {
+                    mPhone.setError("Phone Number is Required");
+                }
 
                 if(TextUtils.isEmpty(email)) {
                     mEmail.setError("Email is Required");
@@ -70,17 +93,23 @@ public class signUpPage extends AppCompatActivity {
 
                 progressBar.setVisibility(View.VISIBLE);
 
-                // REGISTER THE USER IN FIREBASE
+                //SAVING USER DETAILS IN FIREBASE DATABASE ////////////////////////////
+
+                if(!name.isEmpty() && !sbuID.isEmpty() && !phone.isEmpty()) {
+
+                    Users users = new Users(name,sbuID,phone);
+                    db = FirebaseDatabase.getInstance();
+                    reference = db.getReference("Users");
+                    reference.child(name).setValue(users);
+                }
+
+                // REGISTER THE USER IN FIREBASE ///////////////////////////////////////
 
                 fAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
-                            Toast.makeText(signUpPage.this, "User Created", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(getApplicationContext(), MainActivity.class));
-
-
-
                         } else {
                             Toast.makeText(signUpPage.this, "Error!" + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             progressBar.setVisibility(View.GONE);
@@ -96,8 +125,5 @@ public class signUpPage extends AppCompatActivity {
                 startActivity(new Intent(getApplicationContext(), MainActivity.class));
             }
         });
-
-
-
     }
 }
