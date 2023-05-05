@@ -73,20 +73,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
                             Toast.makeText(MainActivity.this, "Logged In Successfully", Toast.LENGTH_SHORT).show();
-                            DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("cycles");
-                            reference.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                        System.out.println("Cycle key : "+snapshot.getKey());
-                                        System.out.println("Cycle key : "+snapshot.getValue());
-                                    }
-                                }
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
 
-                                }
-                            });
                             startActivity(new Intent(getApplicationContext(), MapsActivity.class));
                         } else {
                             Toast.makeText(MainActivity.this, "Error!" + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
