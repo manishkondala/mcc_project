@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,15 +19,26 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.mcc_project.databinding.ActivityMapsBinding;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import org.w3c.dom.Text;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+    private TextView text2;
+    FirebaseDatabase db;
+    DatabaseReference reference;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        text2 = findViewById(R.id.idTVtextTwo);
+
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -51,9 +63,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng cycleStand1 = new LatLng(40.908061230392526, -73.11025900651921);
-        mMap.addMarker(new MarkerOptions().position(cycleStand1).title("CycleStand1")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(cycleStand1, 17));
+        LatLng chapinStand = new LatLng(40.90804153702675, -73.11056348133616);
+        LatLng recStand = new LatLng(40.91685359483822, -73.12389716535296);
+        LatLng rothStand = new LatLng(40.91066812941763, -73.12385078024428);
+        LatLng sacStand = new LatLng(40.914690268275045, -73.12418302640131);
+
+        mMap.addMarker(new MarkerOptions().position(chapinStand).title("Chapin Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(chapinStand, 17));
+
+        mMap.addMarker(new MarkerOptions().position(recStand).title("REC Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(recStand, 17));
+
+        mMap.addMarker(new MarkerOptions().position(rothStand).title("Roth Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(rothStand, 17));
+
+        mMap.addMarker(new MarkerOptions().position(sacStand).title("SAC Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sacStand, 17));
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -79,7 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Drawable res= getResources().getDrawable(R.drawable.cycleimage);
         image1.setImageDrawable(res);
 
-        text1.setText("Cycle Stand 1");
+        text1.setText("Wolfie's Bike Stand");
         text2.setText("10 Cycles Available");
 
         bottomSheetDialog.show();
