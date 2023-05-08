@@ -6,8 +6,10 @@ import androidx.fragment.app.FragmentActivity;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -18,6 +20,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.mcc_project.databinding.ActivityMapsBinding;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -25,9 +29,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +38,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
-    private TextView text2;
+    private TextView text2,emergencyText;
     FirebaseDatabase db;
     DatabaseReference reference;
+    Button reserveButton;
     List<CycleStand> cycleStandList = new ArrayList<>();
+    HashMap<String, Integer> map = new HashMap<>();
+    State state = new State();
 
 
     @Override
@@ -46,7 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         text2 = findViewById(R.id.idTVtextTwo);
-
+        emergencyText = findViewById(R.id.emergencyID);
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -70,54 +76,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         fetchData();
-        System.out.println("CycleStand Size :"+cycleStandList.size());
-        for(CycleStand cycleStand : cycleStandList) {
-            System.out.println("The Cycle Details : ");
-            System.out.println(cycleStand.getName());
-            System.out.println(cycleStand.getLatitude());
-            System.out.println(cycleStand.getLongitude());
-            System.out.println(cycleStand.getQuantity());
-
-        }
-       // createInitialMap();
-
-
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
                 Object markerData = marker.getTag();
-                System.out.println("Entering markerData");
                 if (markerData != null) {
-                    String dataString = markerData.toString();
-                    System.out.println("The Marker dataString : "+dataString);
+                    String cycleStandName = markerData.toString();
+                    displayBottomSheet(cycleStandName);
                 }
-                displayBottomSheet();
                 return true;
             }
         });
     }
 
-    private void createInitialMap() {
-        LatLng chapinStand = new LatLng(40.90804153702675, -73.11056348133616);
-        LatLng recStand = new LatLng(40.91685359483822, -73.12389716535296);
-        LatLng rothStand = new LatLng(40.91066812941763, -73.12385078024428);
-        LatLng sacStand = new LatLng(40.914690268275045, -73.12418302640131);
-
-        mMap.addMarker(new MarkerOptions().position(chapinStand).title("Chapin Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(chapinStand, 17));
-
-        mMap.addMarker(new MarkerOptions().position(recStand).title("REC Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(recStand, 17));
-
-        mMap.addMarker(new MarkerOptions().position(rothStand).title("Roth Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(rothStand, 17));
-
-        mMap.addMarker(new MarkerOptions().position(sacStand).title("SAC Cycle Stand")).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sacStand, 17));
-
-    }
-
-    private void displayBottomSheet() {
+    private void displayBottomSheet(String cycleStandName) {
 
         // creating a variable for our bottom sheet dialog.
         final BottomSheetDialog bottomSheetDialog= new BottomSheetDialog(this);
@@ -132,12 +104,89 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Drawable res= getResources().getDrawable(R.drawable.cycleimage);
         image1.setImageDrawable(res);
 
+        int availableQuantity = map.get(cycleStandName);
 
+        text1.setText(cycleStandName + " Bike Stand");
+        text2.setText(availableQuantity + " Cycles Available");
 
-        text1.setText("Wolfie's Bike Stand");
-        //text2.setText("10 Cycles Available");
-
+        reserveButton = bottomSheetDialog.findViewById(R.id.reserveBtn);
+        if(!state.isCycleReserved) {
+            reserveButton.setText("Reserve Cycle");
+        } else {
+            reserveButton.setText("Drop Off Cycle");
+        }
+        reserveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Step 4 : On Clicking Reserve Button :
+                //i) Check count cycle count >0
+                //ii) If true, then decrease count in DB by 1
+                //iii) Maintain State that the cycle is reserved
+                //iv) Show Timer
+                //v) Change Bottom Sheet layout (Drop Cycle)
+                System.out.println("Reserve Button is Clicked");
+                System.out.println("Available Quantity : "+availableQuantity);
+                if(!state.isCycleReserved) {
+                    if (availableQuantity > 0) {
+                        reserveCycle();
+                        updateDb(cycleStandName, availableQuantity-1);
+                        showTimer();
+                        showCycleOnMap(); // get current location from user and update cycle marker on that map position
+                    }
+                } else {
+                    dropCycle();
+                    updateDb(cycleStandName, availableQuantity+1);
+                }
+            }
+        });
         bottomSheetDialog.show();
+    }
+
+    private void dropCycle() {
+        state.setCycleReserved(false);
+    }
+
+    private void showCycleOnMap() {
+    }
+
+    private void showTimer() {
+    }
+
+    private void emergencyBtn() {
+        emergencyText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MapsActivity.this, "Admins have been notified!", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateDb(String cycleStandName, int availableQuantity) {
+        DatabaseReference cyclesRef = FirebaseDatabase.getInstance().getReference("cycles");
+        Map<String, Object> updates = new HashMap<>();
+        String path = cycleStandName + "/" + "quantity";
+        System.out.println("The path " +path);
+        updates.put(path, availableQuantity);
+
+        cyclesRef.updateChildren(updates)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        // The values were successfully updated
+                        System.out.println("Value update is success");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // There was an error updating the values
+                        System.out.println("Value update is Failed");
+                    }
+                });
+    }
+
+    private void reserveCycle() {
+        state.setCycleReserved(true);
     }
 
     public void fetchData() {
@@ -145,9 +194,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
                 for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    System.out.println("Cycle key : "+snapshot.getKey());
-                    System.out.println("Cycle quantity : "+snapshot.getValue());
 
                     CycleStand cycleStand = new CycleStand();
                     String key = snapshot.getKey();
@@ -168,35 +216,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             if(childKey.equals("longitude")) {
                                 cycleStand.setLongitude(childValue.toString());
                             }
-
-                            System.out.println("Child1 key: " + childKey);
-                            System.out.println("Child1 value: " + childValue);
                         }
                     }
                     cycleStandList.add(cycleStand);
-                    System.out.println("CycleStand Size after adding :"+cycleStandList.size());
-                    updateCycleMap(cycleStandList);
+                    map.put(key, cycleStand.getQuantity());
+                    createCycleMap(cycleStandList);
                 }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
             }
         });
     }
 
-    private void updateCycleMap(List<CycleStand> cycleStandList) {
+    private void createCycleMap(List<CycleStand> cycleStandList) {
         for(CycleStand cycleStand : cycleStandList) {
             LatLng coordinates = new LatLng(Double.parseDouble(cycleStand.getLatitude()), Double.parseDouble(cycleStand.getLongitude()));
-            String name = cycleStand.getName();
-            Marker marker;
-            mMap.addMarker(new MarkerOptions().position(coordinates).title(name)).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+            String cycleStandName = cycleStand.getName();
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(coordinates)
+                    .title(cycleStandName);
+
+            Marker marker = mMap.addMarker(markerOptions);
+            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.cycleimage));
+            marker.setTag(cycleStandName);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 17));
-
-            //text2.setText(cycleStand.getQuantity());
-
         }
-
-
     }
 }

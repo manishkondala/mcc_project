@@ -49,22 +49,6 @@
         app:layout_constraintVertical_bias="0.429" />
 
     <EditText
-        android:id="@+id/editTextPhone"
-        android:layout_width="386dp"
-        android:layout_height="42dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:ems="10"
-        android:hint="(123) 456-789"
-        android:inputType="phone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.561" />
-
-    <EditText
         android:id="@+id/editTextPersonName"
         android:layout_width="382dp"
         android:layout_height="41dp"
@@ -134,8 +118,8 @@
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="192dp"
-        android:layout_marginBottom="148dp"
+        android:layout_marginStart="180dp"
+        android:layout_marginBottom="144dp"
         android:progressTint="#9F4646"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -145,17 +129,22 @@
 
     <EditText
         android:id="@+id/editTextTextPassword2"
-        android:layout_width="385dp"
-        android:layout_height="46dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="344dp"
-        android:ems="10"
+        android:layout_width="383dp"
+        android:layout_height="44dp"
         android:hint="Password"
-        android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTextEmailAddress2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.175"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintEnd_toEndOf="@+id/editTextTextEmailAddress2"
+        app:layout_constraintStart_toStartOf="@+id/editTextTextEmailAddress2"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTextEmailAddress2" />
+
+    <EditText
+        android:id="@+id/editTextPhone"
+        android:layout_width="384dp"
+        android:layout_height="41dp"
+        android:hint="(123)456-789"
+        app:layout_constraintEnd_toEndOf="@+id/editTextTextPassword2"
+        app:layout_constraintStart_toStartOf="@+id/editTextTextPassword2"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTextPassword2" />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
