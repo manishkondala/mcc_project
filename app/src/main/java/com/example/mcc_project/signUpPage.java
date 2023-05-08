@@ -20,6 +20,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.ktx.Firebase;
 
 public class signUpPage extends AppCompatActivity {
@@ -30,6 +31,7 @@ public class signUpPage extends AppCompatActivity {
     FirebaseAuth fAuth;
     ProgressBar progressBar;
     FirebaseDatabase db;
+    FirebaseFirestore firebaseFirestore;
     DatabaseReference reference;
 
     @Override
@@ -47,6 +49,7 @@ public class signUpPage extends AppCompatActivity {
         mLoginButton = findViewById(R.id.existingUserID);
 
         fAuth = FirebaseAuth.getInstance();
+        firebaseFirestore = FirebaseFirestore.getInstance();
 
         progressBar = findViewById(R.id.progressBar);
 
@@ -95,9 +98,9 @@ public class signUpPage extends AppCompatActivity {
 
                 //SAVING USER DETAILS IN FIREBASE DATABASE ////////////////////////////
 
-                if(!name.isEmpty() && !sbuID.isEmpty() && !phone.isEmpty()) {
+                if(!name.isEmpty() && !sbuID.isEmpty() && !phone.isEmpty() &&!email.isEmpty()) {
 
-                    Users users = new Users(name,sbuID,phone);
+                    Users users = new Users(name,sbuID,phone,email);
                     db = FirebaseDatabase.getInstance();
                     reference = db.getReference("Users");
                     reference.child(name).setValue(users).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -106,9 +109,9 @@ public class signUpPage extends AppCompatActivity {
                             name.isEmpty();
                             sbuID.isEmpty();
                             phone.isEmpty();
+                            email.isEmpty();
                         }
                     });
-
                 }
 
                 // REGISTER THE USER IN FIREBASE ///////////////////////////////////////
@@ -118,6 +121,7 @@ public class signUpPage extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
                             startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                            firebaseFirestore.collection("User").document(fAuth.getInstance().getUid()).set(new Users(name,sbuID,phone,email));
                         } else {
                             Toast.makeText(signUpPage.this, "Error!" + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             progressBar.setVisibility(View.GONE);
@@ -130,7 +134,7 @@ public class signUpPage extends AppCompatActivity {
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                startActivity(new Intent(signUpPage.this, MainActivity.class));
             }
         });
     }

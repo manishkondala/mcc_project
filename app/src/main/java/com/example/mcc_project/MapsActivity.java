@@ -3,8 +3,11 @@ package com.example.mcc_project;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
+import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,13 +26,18 @@ import com.example.mcc_project.databinding.ActivityMapsBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.auth.User;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +47,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private TextView text2,emergencyText;
-    FirebaseDatabase db;
+    FirebaseDatabase fAuth;
     DatabaseReference reference;
+    FirebaseFirestore firebaseFirestore;
+
+    ProgressDialog progressDialog;
     Button reserveButton;
     List<CycleStand> cycleStandList = new ArrayList<>();
     HashMap<String, Integer> map = new HashMap<>();
     State state = new State();
+
 
 
     @Override
@@ -52,7 +64,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         text2 = findViewById(R.id.idTVtextTwo);
-        emergencyText = findViewById(R.id.emergencyID);
+
+        fAuth = FirebaseDatabase.getInstance();
+
+        progressDialog = new ProgressDialog(this);
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -127,16 +142,51 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println("Reserve Button is Clicked");
                 System.out.println("Available Quantity : "+availableQuantity);
                 if(!state.isCycleReserved) {
+                    if(availableQuantity == 0) {
+                        Toast.makeText(MapsActivity.this, "No Cycle in current location", Toast.LENGTH_LONG).show();
+                    }
                     if (availableQuantity > 0) {
                         reserveCycle();
                         updateDb(cycleStandName, availableQuantity-1);
+                        progressDialog.setTitle("Picking Cycle...");
+                        progressDialog.show();
                         showTimer();
                         showCycleOnMap(); // get current location from user and update cycle marker on that map position
+
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressDialog.dismiss();
+                                bottomSheetDialog.dismiss();
+                                Toast.makeText(MapsActivity.this, "Cycle is Reserved", Toast.LENGTH_LONG).show();
+                            }
+                        },1000);
                     }
                 } else {
                     dropCycle();
+                    progressDialog.setTitle("Dropping Cycle...");
+                    progressDialog.show();
                     updateDb(cycleStandName, availableQuantity+1);
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressDialog.dismiss();
+                            bottomSheetDialog.dismiss();
+                            Toast.makeText(MapsActivity.this, "Cycle is Dropped", Toast.LENGTH_LONG).show();
+                        }
+                    },1000);
+
                 }
+            }
+        });
+
+        emergencyText = bottomSheetDialog.findViewById(R.id.emergencyID);
+        emergencyText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MapsActivity.this, "ADMIN is notified!", Toast.LENGTH_LONG).show();
             }
         });
         bottomSheetDialog.show();
@@ -152,21 +202,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void showTimer() {
     }
 
-    private void emergencyBtn() {
-        emergencyText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(MapsActivity.this, "Admins have been notified!", Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
     private void updateDb(String cycleStandName, int availableQuantity) {
         DatabaseReference cyclesRef = FirebaseDatabase.getInstance().getReference("cycles");
         Map<String, Object> updates = new HashMap<>();
         String path = cycleStandName + "/" + "quantity";
         System.out.println("The path " +path);
         updates.put(path, availableQuantity);
+
+        /*
+        @SuppressLint("RestrictedApi")
+        Users user = new User(fAuth.getUid());
+
+        //i) Mode --> Pickup/Drop ii) timestamp iii) cycle stand location
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference userRef = database.getReference("users/" + users.getName());
+
+        Transaction transaction = new Transaction("location", "pickup", "dsad");
+        userRef.child("transactionList").push().setValue(transaction);
+
+        userRef.child("transactionList").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Handle changes to the transaction list
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle errors
+            }
+        });
+
+
+        userRef.child("transactionList").push().setValue(transaction);
+
+         */
+
+
+
+
 
         cyclesRef.updateChildren(updates)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
