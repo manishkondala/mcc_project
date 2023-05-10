@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentActivity;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -91,7 +92,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (locationResult == null) {
                 return;
             }
-            for(Location location: locationResult.getLocations()) {
+            for (Location location : locationResult.getLocations()) {
                 Log.d(TAG, "onLocationResult: " + location.toString());
                 if (mMap != null) {
                     setUserLocationMarker(locationResult.getLastLocation());
@@ -146,22 +147,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void setUserLocationMarker(Location location) {
 
-        LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
         if (userLocationMarker == null) {
             //WE CREATE A NEW MARKER
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
 
-            if (state.isCycleReserved()) {
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cycleafterres));
-            } else {
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cyclebeforeres));
-            }
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cycleafterres));
 
             markerOptions.rotation(location.getBearing());
             userLocationMarker = mMap.addMarker(markerOptions);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,17));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
         } else {
             //USE PREVIOUSLY CREATED MARKER
             userLocationMarker.setPosition(latLng);
@@ -254,13 +251,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 Log.d(TAG, "askLocationPermission: You Should Show an Alert Dialog...");
-                ActivityCompat.requestPermissions(this, new String [] {Manifest.permission.ACCESS_FINE_LOCATION},LOCATION_REQUEST_CODE);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
             } else {
-                ActivityCompat.requestPermissions(this, new String [] {Manifest.permission.ACCESS_FINE_LOCATION},LOCATION_REQUEST_CODE);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
             }
         }
     }
-
 
 
     @Override
@@ -289,6 +285,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
         fetchData();
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -301,21 +298,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return true;
             }
         });
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        googleMap.setMyLocationEnabled(true);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+
     }
 
     private void displayBottomSheet(String cycleStandName) {
 
         // creating a variable for our bottom sheet dialog.
-        final BottomSheetDialog bottomSheetDialog= new BottomSheetDialog(this);
+        final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         bottomSheetDialog.setContentView(R.layout.bottom_sheet_layout);
 
 
         // passing a layout file for our bottom sheet dialog.
-        ImageView image1= bottomSheetDialog.findViewById(R.id.idIVimage);
-        TextView text1= bottomSheetDialog.findViewById(R.id.idTVtext);
-        TextView text2= bottomSheetDialog.findViewById(R.id.idTVtextTwo);
+        ImageView image1 = bottomSheetDialog.findViewById(R.id.idIVimage);
+        TextView text1 = bottomSheetDialog.findViewById(R.id.idTVtext);
+        TextView text2 = bottomSheetDialog.findViewById(R.id.idTVtextTwo);
 
-        Drawable res= getResources().getDrawable(R.drawable.cycleimage);
+        Drawable res = getResources().getDrawable(R.drawable.cycleimage);
         image1.setImageDrawable(res);
 
         int availableQuantity = map.get(cycleStandName);
@@ -324,7 +328,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         text2.setText(availableQuantity + " Cycles Available");
 
         reserveButton = bottomSheetDialog.findViewById(R.id.reserveBtn);
-        if(!state.isCycleReserved) {
+        if (!state.isCycleReserved) {
             reserveButton.setText("Reserve Cycle");
         } else {
             reserveButton.setText("Drop Off Cycle");
@@ -339,14 +343,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //iv) Show Timer
                 //v) Change Bottom Sheet layout (Drop Cycle)
                 System.out.println("Reserve Button is Clicked");
-                System.out.println("Available Quantity : "+availableQuantity);
-                if(!state.isCycleReserved) {
-                    if(availableQuantity == 0) {
+                System.out.println("Available Quantity : " + availableQuantity);
+                if (!state.isCycleReserved) {
+                    if (availableQuantity == 0) {
                         Toast.makeText(MapsActivity.this, "No Cycle in current location", Toast.LENGTH_LONG).show();
                     }
                     if (availableQuantity > 0) {
                         reserveCycle();
-                        updateDb(cycleStandName, availableQuantity-1);
+                        updateDb(cycleStandName, availableQuantity - 1);
                         progressDialog.setTitle("Picking Cycle...");
                         progressDialog.show();
                         showTimer();
@@ -360,13 +364,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 bottomSheetDialog.dismiss();
                                 Toast.makeText(MapsActivity.this, "Cycle is Reserved", Toast.LENGTH_LONG).show();
                             }
-                        },1000);
+                        }, 1000);
                     }
                 } else {
                     dropCycle();
                     progressDialog.setTitle("Dropping Cycle...");
                     progressDialog.show();
-                    updateDb(cycleStandName, availableQuantity+1);
+                    updateDb(cycleStandName, availableQuantity + 1);
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
@@ -375,7 +379,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             bottomSheetDialog.dismiss();
                             Toast.makeText(MapsActivity.this, "Cycle is Dropped", Toast.LENGTH_LONG).show();
                         }
-                    },1000);
+                    }, 1000);
 
                 }
             }
@@ -396,6 +400,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void showCycleOnMap() {
+
     }
 
     private void showTimer() {
@@ -405,7 +410,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         DatabaseReference cyclesRef = FirebaseDatabase.getInstance().getReference("cycles");
         Map<String, Object> updates = new HashMap<>();
         String path = cycleStandName + "/" + "quantity";
-        System.out.println("The path " +path);
+        System.out.println("The path " + path);
         updates.put(path, availableQuantity);
 
         /*
@@ -437,9 +442,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
          */
 
 
-
-
-
         cyclesRef.updateChildren(updates)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -467,7 +469,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 
                     CycleStand cycleStand = new CycleStand();
                     String key = snapshot.getKey();
@@ -479,13 +481,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         for (Map.Entry<String, Object> entry : mapValue.entrySet()) {
                             String childKey = entry.getKey();
                             Object childValue = entry.getValue();
-                            if(childKey.equals("quantity")) {
+                            if (childKey.equals("quantity")) {
                                 cycleStand.setQuantity(Integer.parseInt(childValue.toString()));
                             }
-                            if(childKey.equals("latitude")) {
+                            if (childKey.equals("latitude")) {
                                 cycleStand.setLatitude(childValue.toString());
                             }
-                            if(childKey.equals("longitude")) {
+                            if (childKey.equals("longitude")) {
                                 cycleStand.setLongitude(childValue.toString());
                             }
                         }
@@ -495,6 +497,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     createCycleMap(cycleStandList);
                 }
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
             }
@@ -502,7 +505,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void createCycleMap(List<CycleStand> cycleStandList) {
-        for(CycleStand cycleStand : cycleStandList) {
+        for (CycleStand cycleStand : cycleStandList) {
             LatLng coordinates = new LatLng(Double.parseDouble(cycleStand.getLatitude()), Double.parseDouble(cycleStand.getLongitude()));
             String cycleStandName = cycleStand.getName();
             MarkerOptions markerOptions = new MarkerOptions()
