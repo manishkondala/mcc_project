@@ -145,25 +145,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         stopLocationUpdates();
     }
 
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+    }
+
     private void setUserLocationMarker(Location location) {
 
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-        if (userLocationMarker == null) {
-            //WE CREATE A NEW MARKER
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng);
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
 
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cycleafterres));
+        if (state.isCycleReserved()) {
 
-            markerOptions.rotation(location.getBearing());
-            userLocationMarker = mMap.addMarker(markerOptions);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
-        } else {
-            //USE PREVIOUSLY CREATED MARKER
-            userLocationMarker.setPosition(latLng);
-            userLocationMarker.setRotation(location.getBearing());
-            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,16));
+            //LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+
+            if (userLocationMarker == null) {
+                //WE CREATE A NEW MARKER
+                //MarkerOptions markerOptions = new MarkerOptions();
+                //markerOptions.position(latLng);
+
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cycleafterres));
+
+                markerOptions.rotation(location.getBearing());
+                userLocationMarker = mMap.addMarker(markerOptions);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
+            } else {
+                //USE PREVIOUSLY CREATED MARKER
+                userLocationMarker.setPosition(latLng);
+                userLocationMarker.setRotation(location.getBearing());
+            }
         }
     }
 
