@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -99,7 +100,7 @@ public class signUpPage extends AppCompatActivity {
                 //SAVING USER DETAILS IN FIREBASE DATABASE ////////////////////////////
 
                 if(!name.isEmpty() && !sbuID.isEmpty() && !phone.isEmpty() &&!email.isEmpty()) {
-
+                    storeCurrentUserInSharedPreferences(name);
                     Users users = new Users(name,sbuID,phone,email);
                     db = FirebaseDatabase.getInstance();
                     reference = db.getReference("Users");
@@ -137,6 +138,13 @@ public class signUpPage extends AppCompatActivity {
                 startActivity(new Intent(signUpPage.this, MainActivity.class));
             }
         });
+    }
+
+    private void storeCurrentUserInSharedPreferences(String name) {
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("currentUser", name); // where `username` is the currently logged-in user
+        editor.apply();
     }
 
 

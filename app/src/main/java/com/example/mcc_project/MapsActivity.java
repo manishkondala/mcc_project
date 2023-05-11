@@ -61,8 +61,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.auth.User;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +87,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     List<CycleStand> cycleStandList = new ArrayList<>();
     HashMap<String, Integer> map = new HashMap<>();
     State state = new State();
+
 
     LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -364,7 +367,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     if (availableQuantity > 0) {
                         reserveCycle();
-                        updateDb(cycleStandName, availableQuantity - 1);
+                        updateDb(cycleStandName, availableQuantity-1, "pickup");
                         progressDialog.setTitle("Picking Cycle...");
                         progressDialog.show();
                         showTimer();
@@ -384,7 +387,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     dropCycle();
                     progressDialog.setTitle("Dropping Cycle...");
                     progressDialog.show();
-                    updateDb(cycleStandName, availableQuantity + 1);
+                    updateDb(cycleStandName, availableQuantity+1, "drop");
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
@@ -420,7 +423,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void showTimer() {
     }
 
-    private void updateDb(String cycleStandName, int availableQuantity) {
+    private void updateDb(String cycleStandName, int availableQuantity, String mode) {
+        updateCycleQuantity(cycleStandName, availableQuantity);
+        addTransactionLogs(cycleStandName, mode);
+    }
+
+    private void addTransactionLogs(String cycleStandName, String mode) {
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+
+        String currentUser = sharedPreferences.getString("currentUser", "");
+        System.out.println("currentUser : " + currentUser);
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        //String currentUser1 = mAuth.getCurrentUser().getDisplayName();
+       // System.out.println("Current User : " + currentUser1);
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users/" + currentUser);
+
+        // Generate a new unique child key for the transaction node
+        String transactionKey = userRef.child("transactionList").push().getKey();
+
+        // Create a new map to hold the values of the "location", "mode", and "timestamp" fields
+        Map<String, Object> transactionValues = new HashMap<>();
+        transactionValues.put("location", cycleStandName);
+        transactionValues.put("mode", mode);
+        transactionValues.put("timestamp", System.currentTimeMillis());
+        //adding dateTime only for demo purposes, not required in DB, timestamp is sufficient
+        transactionValues.put("dateTime", DateFormat.getDateTimeInstance().format(new Date(System.currentTimeMillis())));
+
+        // Set the values of the "location", "mode", and "timestamp" fields for the new child node
+        Task<Void> setValueTask = userRef.child("transactionList").child(transactionKey).setValue(transactionValues);
+
+// Add success and failure listeners to the task
+        setValueTask.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                // Handle successful write operation
+                System.out.println("Transaction is success");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Handle failed write operation
+                System.out.println("Transaction has failed");
+            }
+        });
+
+    }
+
+    private void updateCycleQuantity(String cycleStandName, int availableQuantity) {
         DatabaseReference cyclesRef = FirebaseDatabase.getInstance().getReference("cycles");
         Map<String, Object> updates = new HashMap<>();
         String path = cycleStandName + "/" + "quantity";
