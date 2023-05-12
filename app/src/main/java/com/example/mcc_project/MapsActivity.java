@@ -480,35 +480,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         System.out.println("The path " + path);
         updates.put(path, availableQuantity);
 
-        /*
-        @SuppressLint("RestrictedApi")
-        Users user = new User(fAuth.getUid());
-
-        //i) Mode --> Pickup/Drop ii) timestamp iii) cycle stand location
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference userRef = database.getReference("users/" + users.getName());
-
-        Transaction transaction = new Transaction("location", "pickup", "dsad");
-        userRef.child("transactionList").push().setValue(transaction);
-
-        userRef.child("transactionList").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Handle changes to the transaction list
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle errors
-            }
-        });
-
-
-        userRef.child("transactionList").push().setValue(transaction);
-
-         */
-
-
         cyclesRef.updateChildren(updates)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
