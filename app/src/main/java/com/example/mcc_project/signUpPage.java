@@ -76,8 +76,17 @@ public class signUpPage extends AppCompatActivity {
                     mSBUID.setError("Stony Brook ID is Required");
                 }
 
+                if(sbuID.length() < 6) {
+                    mSBUID.setError("Stony Brook ID must be = 7 Characters");
+                }
+
                 if(TextUtils.isEmpty(phone)) {
                     mPhone.setError("Phone Number is Required");
+                }
+
+                if(phone.length() < 10) {
+                    mPassword.setError("Number must be = 10 Characters");
+                    return;
                 }
 
                 if(TextUtils.isEmpty(email)) {

@@ -414,6 +414,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void dropCycle() {
         state.setCycleReserved(false);
+        if(userLocationMarker!=null)
+        {
+            userLocationMarker.remove();
+        }
     }
 
     private void showCycleOnMap() {

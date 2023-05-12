@@ -132,6 +132,7 @@
         android:layout_width="383dp"
         android:layout_height="44dp"
         android:hint="Password"
+        android:inputType="textPassword"
         app:layout_constraintEnd_toEndOf="@+id/editTextTextEmailAddress2"
         app:layout_constraintStart_toStartOf="@+id/editTextTextEmailAddress2"
         app:layout_constraintTop_toBottomOf="@+id/editTextTextEmailAddress2" />
@@ -140,11 +141,11 @@
         android:id="@+id/editTextPhone"
         android:layout_width="384dp"
         android:layout_height="41dp"
-        android:hint="(123)456-789"
+        android:hint="(123)456-7890"
+        android:inputType="number"
         app:layout_constraintEnd_toEndOf="@+id/editTextTextPassword2"
         app:layout_constraintStart_toStartOf="@+id/editTextTextPassword2"
         app:layout_constraintTop_toBottomOf="@+id/editTextTextPassword2" />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
