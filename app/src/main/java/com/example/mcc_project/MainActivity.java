@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 progressBar.setVisibility(View.VISIBLE);
 
-                // AUTEHNTICATE THE USER
+                // AUTHENTICATE THE USER
 
                 fAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override

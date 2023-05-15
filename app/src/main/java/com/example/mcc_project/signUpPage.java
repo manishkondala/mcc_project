@@ -76,17 +76,8 @@ public class signUpPage extends AppCompatActivity {
                     mSBUID.setError("Stony Brook ID is Required");
                 }
 
-                if(sbuID.length() < 6) {
-                    mSBUID.setError("Stony Brook ID must be = 7 Characters");
-                }
-
                 if(TextUtils.isEmpty(phone)) {
                     mPhone.setError("Phone Number is Required");
-                }
-
-                if(phone.length() < 10) {
-                    mPassword.setError("Number must be = 10 Characters");
-                    return;
                 }
 
                 if(TextUtils.isEmpty(email)) {
@@ -109,7 +100,7 @@ public class signUpPage extends AppCompatActivity {
                 //SAVING USER DETAILS IN FIREBASE DATABASE ////////////////////////////
 
                 if(!name.isEmpty() && !sbuID.isEmpty() && !phone.isEmpty() &&!email.isEmpty()) {
-                    storeCurrentUserInSharedPreferences(name);
+                    storeCurrentUserInSharedPreferences(name, phone, email);
                     Users users = new Users(name,sbuID,phone,email);
                     db = FirebaseDatabase.getInstance();
                     reference = db.getReference("Users");
@@ -149,10 +140,12 @@ public class signUpPage extends AppCompatActivity {
         });
     }
 
-    private void storeCurrentUserInSharedPreferences(String name) {
+    private void storeCurrentUserInSharedPreferences(String name, String phone, String email) {
         SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("currentUser", name); // where `username` is the currently logged-in user
+        editor.putString("phone", phone); // where `username` is the currently logged-in user
+        editor.putString("email", email);
         editor.apply();
     }
 

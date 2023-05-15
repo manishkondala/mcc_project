@@ -87,6 +87,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     List<CycleStand> cycleStandList = new ArrayList<>();
     HashMap<String, Integer> map = new HashMap<>();
     State state = new State();
+    EmergencyNotification emergencyNotification = new EmergencyNotification();
+
+    static String currentLatitude;
+    static String currentLongitude;
 
 
     LocationCallback locationCallback = new LocationCallback() {
@@ -157,19 +161,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setUserLocationMarker(Location location) {
 
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        currentLatitude  = String.valueOf(location.getLatitude());
+        currentLongitude  = String.valueOf(location.getLongitude());
 
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
 
         if (state.isCycleReserved()) {
 
-            //LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-
             if (userLocationMarker == null) {
                 //WE CREATE A NEW MARKER
-                //MarkerOptions markerOptions = new MarkerOptions();
-                //markerOptions.position(latLng);
 
                 markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.cycleafterres));
 
@@ -281,7 +282,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //PERMISSON GRANTED
+                //PERMISSION GRANTED
 //                getLastLocation();
                 checkSettingsAndStartLocationUpdates();
             } else {
@@ -407,6 +408,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 Toast.makeText(MapsActivity.this, "ADMIN is notified!", Toast.LENGTH_LONG).show();
+                SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+                String currentUser = sharedPreferences.getString("currentUser", "");
+                String phone = sharedPreferences.getString("phone", "");
+                String email = sharedPreferences.getString("email", "");
+                emergencyNotification.setAlertInDatabase(currentUser, currentLatitude, currentLongitude, phone, email);
             }
         });
         bottomSheetDialog.show();
@@ -414,10 +420,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void dropCycle() {
         state.setCycleReserved(false);
-        if(userLocationMarker!=null)
-        {
-            userLocationMarker.remove();
-        }
     }
 
     private void showCycleOnMap() {
@@ -433,13 +435,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void addTransactionLogs(String cycleStandName, String mode) {
-        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
 
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
         String currentUser = sharedPreferences.getString("currentUser", "");
         System.out.println("currentUser : " + currentUser);
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        //String currentUser1 = mAuth.getCurrentUser().getDisplayName();
-       // System.out.println("Current User : " + currentUser1);
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users/" + currentUser);
 
         // Generate a new unique child key for the transaction node
@@ -479,6 +479,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String path = cycleStandName + "/" + "quantity";
         System.out.println("The path " + path);
         updates.put(path, availableQuantity);
+
+
+
 
         cyclesRef.updateChildren(updates)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
